@@ -6,10 +6,17 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Stack;
+import java.io.*;
+import java.util.*;
+import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
-import javax.swing.table.TableColumn;
+
+import Supports.Config;
+import Supports.DialogHelpers;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.LineBorder;
+import javax.swing.border.MatteBorder;
 
 /**
  * Created by 130708 on 2015/11/26.
@@ -27,45 +34,33 @@ public class DemoFrame extends JFrame {
    CanvasArea area;
    // model
    Graph graph;
-   private JPanel panel;
-   private JPanel NavigationPanel;
-   private JLabel lblNewLabel;
-   private JLabel lblNewLabel_1;
-   private JLabel lblAlgorithms;
-   private JComboBox comboBox;
-   private JSlider slider;
-   private JLabel lblAnimationSpeed;
-   private JButton runButton;
-   private JPanel panel_1;
-   private JTextArea logTable;
-   private JTable matrixTable;
-   private JScrollPane scrollPane;
 
    public DemoFrame() {
       setupGUI();
-      initializeData();
+      loadSelectGraphCombobox();
       regisEvents();
       initDefaultData();
 
-      matrixTable.setModel(new MatrixTableModel(graph));
-      int maxWidth = matrixTable.getWidth() / (graph.vertices.size() + 1);
-      matrixTable.setRowHeight(24);
-      for (int i = 0; i < matrixTable.getColumnCount(); i++) {
-         matrixTable.getColumnModel().getColumn(i).setWidth(maxWidth);
-         matrixTable.getColumnModel().getColumn(i).setMaxWidth(maxWidth);
-         matrixTable.getColumnModel().getColumn(i).setMinWidth(maxWidth);
-      }
+//      matrixTable.setModel(new MatrixTableModel(graph));
+//      int maxWidth = matrixTable.getWidth() / (graph.vertices.size() + 1);
+//      matrixTable.setRowHeight(24);
+//      for (int i = 0; i < matrixTable.getColumnCount(); i++) {
+//         matrixTable.getColumnModel().getColumn(i).setWidth(maxWidth);
+//         matrixTable.getColumnModel().getColumn(i).setMaxWidth(maxWidth);
+//         matrixTable.getColumnModel().getColumn(i).setMinWidth(maxWidth);
+//      }
       timer = new Timer(500, new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            performStep(e);
+            timerActionPerformed(e);
          }
       });
    }
 
-   private void initializeData() {
-      graph = new Graph();
+   private void setupModel(Graph graph) {
+      this.graph = graph;
       area.setGraph(graph);
+      loadVertexCombobox();
    }
 
    private void loadMatrixTable() {
@@ -74,16 +69,59 @@ public class DemoFrame extends JFrame {
 
    private void setupGUI() {
       contentPane = new JPanel(new BorderLayout());
-      contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
+      contentPane.setBorder(new EmptyBorder(0, 0, 5, 0));
       logPanel = new JPanel();
       logTextArea = new JTextArea();
+      
+      menuBar = new JMenuBar();
+      setJMenuBar(menuBar);
+      
+      mnFile = new JMenu("File");
+      menuBar.add(mnFile);
+      
+      mntmExit = new JMenuItem("Exit");
+      mnFile.add(mntmExit);
       setContentPane(contentPane);
-
-      // header panel
-      JPanel headerPanel = new JPanel(new FlowLayout());
+      JPanel headerPanel = new JPanel();
+      headerPanel.setBorder(new CompoundBorder(new EmptyBorder(0, 0, 5, 0), new CompoundBorder(new MatteBorder(0, 0, 1, 0, (Color) new Color(0, 0, 0)), new EmptyBorder(0, 0, 3, 0))));
       contentPane.add(headerPanel, BorderLayout.NORTH);
+      headerPanel.setLayout(new FlowLayout(FlowLayout.LEADING, 1, 0));
+      
+      newButton = new JButton("");
+      newButton.setIconTextGap(0);
+      headerPanel.add(newButton);
+      newButton.setFocusPainted(false);
+      newButton.setIcon(new ImageIcon(DemoFrame.class.getResource("/resources/new.png")));
+      
+      saveButton = new JButton("");
+      headerPanel.add(saveButton);
+      saveButton.addMouseListener(new MouseAdapter() {
+      	@Override
+      	public void mouseReleased(MouseEvent e) {
+      		buttonmouseReleased(e);
+      	}
+      });
+      
+       saveButton.setIcon(new ImageIcon(DemoFrame.class.getResource("/resources/save.png")));
+      
+      separator = new JSeparator();
+      headerPanel.add(separator);
+      
+      addModeButton = new JToggleButton("");
+      headerPanel.add(addModeButton);
+      addModeButton.addActionListener(new ActionListener() {
+      	public void actionPerformed(ActionEvent e) {
+      		buttonActionPerform(e);
+      	}
+      });
+      
+      addModeButton.setIcon(new ImageIcon(DemoFrame.class.getResource("/resources/edit.png")));
+      
+      selectGraphCombobox = new JComboBox();
+      headerPanel.add(selectGraphCombobox);
 
       area = new CanvasArea();
+      area.setBorder(new CompoundBorder(new LineBorder(new Color(0, 0, 0)), new EmptyBorder(5, 5, 5, 0)));
       contentPane.add(area, BorderLayout.CENTER);
       
       panel = new JPanel();
@@ -99,27 +137,36 @@ public class DemoFrame extends JFrame {
       scrollPane.setViewportView(logTable);
       
       NavigationPanel = new JPanel();
+      NavigationPanel.setBorder(null);
       contentPane.add(NavigationPanel, BorderLayout.WEST);
       GridBagLayout gbl_NavigationPanel = new GridBagLayout();
       gbl_NavigationPanel.columnWidths = new int[]{0, 0, 0};
-      gbl_NavigationPanel.rowHeights = new int[]{0, 0, 0, 0, 0, 0, 0};
+      gbl_NavigationPanel.rowHeights = new int[]{0, 0, 0, 0, 0, 0, 0, 0};
       gbl_NavigationPanel.columnWeights = new double[]{1.0, 1.0, Double.MIN_VALUE};
-      gbl_NavigationPanel.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
+      gbl_NavigationPanel.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
       NavigationPanel.setLayout(gbl_NavigationPanel);
+      
+      lblSample = new JLabel("Sample:");
+      GridBagConstraints gbc_lblSample = new GridBagConstraints();
+      gbc_lblSample.anchor = GridBagConstraints.EAST;
+      gbc_lblSample.insets = new Insets(0, 0, 5, 5);
+      gbc_lblSample.gridx = 0;
+      gbc_lblSample.gridy = 0;
+      NavigationPanel.add(lblSample, gbc_lblSample);
       
       lblNewLabel = new JLabel("From:");
       GridBagConstraints gbc_lblNewLabel = new GridBagConstraints();
       gbc_lblNewLabel.anchor = GridBagConstraints.EAST;
       gbc_lblNewLabel.insets = new Insets(0, 0, 5, 5);
       gbc_lblNewLabel.gridx = 0;
-      gbc_lblNewLabel.gridy = 0;
+      gbc_lblNewLabel.gridy = 1;
       NavigationPanel.add(lblNewLabel, gbc_lblNewLabel);
       startCombobox = new JComboBox();
       GridBagConstraints gbc_startCombobox = new GridBagConstraints();
       gbc_startCombobox.fill = GridBagConstraints.HORIZONTAL;
       gbc_startCombobox.insets = new Insets(0, 0, 5, 0);
       gbc_startCombobox.gridx = 1;
-      gbc_startCombobox.gridy = 0;
+      gbc_startCombobox.gridy = 1;
       NavigationPanel.add(startCombobox, gbc_startCombobox);
       
       lblNewLabel_1 = new JLabel("To:");
@@ -127,14 +174,14 @@ public class DemoFrame extends JFrame {
       gbc_lblNewLabel_1.anchor = GridBagConstraints.EAST;
       gbc_lblNewLabel_1.insets = new Insets(0, 0, 5, 5);
       gbc_lblNewLabel_1.gridx = 0;
-      gbc_lblNewLabel_1.gridy = 1;
+      gbc_lblNewLabel_1.gridy = 2;
       NavigationPanel.add(lblNewLabel_1, gbc_lblNewLabel_1);
       goalCombobox = new JComboBox();
       GridBagConstraints gbc_goalCombobox = new GridBagConstraints();
       gbc_goalCombobox.fill = GridBagConstraints.HORIZONTAL;
       gbc_goalCombobox.insets = new Insets(0, 0, 5, 0);
       gbc_goalCombobox.gridx = 1;
-      gbc_goalCombobox.gridy = 1;
+      gbc_goalCombobox.gridy = 2;
       NavigationPanel.add(goalCombobox, gbc_goalCombobox);
       
       lblAlgorithms = new JLabel("Algorithms:");
@@ -142,7 +189,7 @@ public class DemoFrame extends JFrame {
       gbc_lblAlgorithms.anchor = GridBagConstraints.EAST;
       gbc_lblAlgorithms.insets = new Insets(0, 0, 5, 5);
       gbc_lblAlgorithms.gridx = 0;
-      gbc_lblAlgorithms.gridy = 2;
+      gbc_lblAlgorithms.gridy = 3;
       NavigationPanel.add(lblAlgorithms, gbc_lblAlgorithms);
       
       comboBox = new JComboBox();
@@ -150,7 +197,7 @@ public class DemoFrame extends JFrame {
       gbc_comboBox.insets = new Insets(0, 0, 5, 0);
       gbc_comboBox.fill = GridBagConstraints.HORIZONTAL;
       gbc_comboBox.gridx = 1;
-      gbc_comboBox.gridy = 2;
+      gbc_comboBox.gridy = 3;
       NavigationPanel.add(comboBox, gbc_comboBox);
       
       lblAnimationSpeed = new JLabel("Animation speed:");
@@ -158,7 +205,7 @@ public class DemoFrame extends JFrame {
       gbc_lblAnimationSpeed.anchor = GridBagConstraints.EAST;
       gbc_lblAnimationSpeed.insets = new Insets(0, 0, 5, 5);
       gbc_lblAnimationSpeed.gridx = 0;
-      gbc_lblAnimationSpeed.gridy = 3;
+      gbc_lblAnimationSpeed.gridy = 4;
       NavigationPanel.add(lblAnimationSpeed, gbc_lblAnimationSpeed);
       
       slider = new JSlider();
@@ -166,32 +213,38 @@ public class DemoFrame extends JFrame {
       gbc_slider.insets = new Insets(0, 0, 5, 0);
       gbc_slider.fill = GridBagConstraints.HORIZONTAL;
       gbc_slider.gridx = 1;
-      gbc_slider.gridy = 3;
+      gbc_slider.gridy = 4;
       NavigationPanel.add(slider, gbc_slider);
       
+      panel_2 = new JPanel();
+      GridBagConstraints gbc_panel_2 = new GridBagConstraints();
+      gbc_panel_2.fill = GridBagConstraints.BOTH;
+      gbc_panel_2.insets = new Insets(0, 0, 5, 0);
+      gbc_panel_2.gridx = 1;
+      gbc_panel_2.gridy = 5;
+      NavigationPanel.add(panel_2, gbc_panel_2);
+      panel_2.setLayout(new FlowLayout(FlowLayout.TRAILING, 5, 5));
+      
+      runStepButton = new JButton("Run step");
+      panel_2.add(runStepButton);
+      
       runButton = new JButton("Run");
+      panel_2.add(runButton);
       runButton.addMouseListener(new MouseAdapter() {
       	@Override
       	public void mouseReleased(MouseEvent e) {
       		buttonmouseReleased(e);
       	}
       });
-     
-      GridBagConstraints gbc_runButton = new GridBagConstraints();
-      gbc_runButton.insets = new Insets(0, 0, 5, 0);
-      gbc_runButton.anchor = GridBagConstraints.EAST;
-      gbc_runButton.gridx = 1;
-      gbc_runButton.gridy = 4;
-      NavigationPanel.add(runButton, gbc_runButton);
       
       panel_1 = new JPanel();
       panel_1.setBorder(new TitledBorder(null, "Adjacent matrix", TitledBorder.LEADING, TitledBorder.TOP, null, null));
       GridBagConstraints gbc_panel_1 = new GridBagConstraints();
+      gbc_panel_1.anchor = GridBagConstraints.EAST;
       gbc_panel_1.gridwidth = 2;
-      gbc_panel_1.insets = new Insets(0, 0, 0, 5);
-      gbc_panel_1.fill = GridBagConstraints.BOTH;
+      gbc_panel_1.fill = GridBagConstraints.VERTICAL;
       gbc_panel_1.gridx = 0;
-      gbc_panel_1.gridy = 5;
+      gbc_panel_1.gridy = 6;
       NavigationPanel.add(panel_1, gbc_panel_1);
       panel_1.setLayout(new BorderLayout(0, 0));
       
@@ -201,7 +254,19 @@ public class DemoFrame extends JFrame {
 
    private void regisEvents() {
       startCombobox.addActionListener(e -> comboboxActionPerform(e));
+      selectGraphCombobox.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent e) {
+            comboboxActionPerform(e);
+         }
+      });
    }
+   
+   private void buttonActionPerform(ActionEvent e) {
+	   if (e.getSource() == addModeButton) {
+		   area.inAddMode = addModeButton.isSelected();
+	   }
+   }
+
    private void buttonmouseReleased(MouseEvent e) {
   
       // Run button
@@ -211,45 +276,53 @@ public class DemoFrame extends JFrame {
          searchEngine.dataSource = graph;
          Vertex from = (Vertex)startCombobox.getModel().getSelectedItem();
          Vertex to = (Vertex)goalCombobox.getModel().getSelectedItem();
-//         Stack<Vertex> path =  searchEngine.doSearch(from, null);
          searchResult = searchEngine.doSearch(from, to);
          timer.start();
+      }
+      // Save button clicked
+      else if (e.getSource() == saveButton) {
+         try {
+            Graph selectedGraph = (Graph)selectGraphCombobox.getModel().getSelectedItem();
+            String fileName = (String)JOptionPane.showInputDialog(null, "Enter file name",
+                "Graph name: ", JOptionPane.QUESTION_MESSAGE,null,null, selectedGraph.toString());
+            graph.name = fileName;
+            saveGraph(this.graph, fileName);
+         } catch (IOException e1) {
+            e1.printStackTrace();
+         }
       }
    }
 
    private void comboboxActionPerform(ActionEvent e) {
       if (e.getSource() == startCombobox) {
          loadGoalVertexCombobox();
-      } else if (e.getSource() == goalCombobox) {
-
+      }
+      else if (e.getSource() == selectGraphCombobox) {
+         setupModel((Graph)selectGraphCombobox.getModel().getSelectedItem());
+         area.repaint();
       }
    }
 
    private void initDefaultData() {
-      Vertex vertex1 = new Vertex(new Point(100, 120));
-      Vertex vertex2 = new Vertex(new Point(30, 320));
-      Vertex vertex3 = new Vertex(new Point(250, 250));
-      Vertex vertex4 = new Vertex(new Point(350, 320));
-      Vertex vertex5 = new Vertex(new Point(80, 420));
-      Vertex vertex6 = new Vertex(new Point(440, 220));
-      Vertex vertex7 = new Vertex(new Point(390, 60));
+      if (selectGraphCombobox.getModel().getSize() > 0)
+         selectGraphCombobox.setSelectedIndex(0);
+   }
 
-      graph.addVertex(vertex1);
-      graph.addVertex(vertex2);
-      graph.addVertex(vertex3);
-      graph.addVertex(vertex4);
-      graph.addVertex(vertex5);
-      graph.addVertex(vertex6);
-      graph.addVertex(vertex7);
+   private void loadSelectGraphCombobox() {
+      DefaultComboBoxModel<Graph> model = new DefaultComboBoxModel();
+      File[] files = new File("sample").listFiles();
+      for (File file: files) {
+         try {
+            model.addElement(loadGraph(file));
 
-      graph.addEdge(new Edge(vertex1, vertex2));
-      graph.addEdge(new Edge(vertex1, vertex3));
-      graph.addEdge(new Edge(vertex1, vertex7));
-      graph.addEdge(new Edge(vertex2, vertex4));
-      graph.addEdge(new Edge(vertex3, vertex5));
-      graph.addEdge(new Edge(vertex6, vertex7));
-
-      loadVertexCombobox();
+         } catch (Exception e) {
+            System.out.println("Could not load : " + file.getName());
+         }
+      }
+      if (model.getSize() == 0) {
+         model.addElement(new Graph());
+      }
+      selectGraphCombobox.setModel(model);
    }
 
    private void loadVertexCombobox() {
@@ -272,7 +345,7 @@ public class DemoFrame extends JFrame {
          goalCombobox.setSelectedIndex(selectedItem);
    }
 
-   private void performStep(ActionEvent e) {
+   private void timerActionPerformed(ActionEvent e) {
       if (searchResult.traversalPath.empty()) {
          while (!searchResult.shortestPath.empty()) {
             searchResult.shortestPath.pop().setState(Vertex.SHORTESTPATH);
@@ -299,9 +372,56 @@ public class DemoFrame extends JFrame {
       area.repaint();
    }
 
+   private Graph loadGraph(File file) throws ClassNotFoundException, IOException {
+      FileInputStream fis = new FileInputStream(file);
+      ObjectInputStream objectInputStream = new ObjectInputStream(fis);
+      Graph result = (Graph)objectInputStream.readObject();
+      objectInputStream.close();
+      return  result;
+   }
+
+   private void saveGraph(Graph graph, String fileName) throws IOException {
+      File file = new File("sample/" + fileName);
+      if (!file.exists())
+         file.createNewFile();
+
+      FileOutputStream fos = new FileOutputStream(file, false);
+      ObjectOutputStream objectOutputStream = new ObjectOutputStream(fos);
+      objectOutputStream.writeObject(graph);
+
+      fos.close();
+      objectOutputStream.close();
+   }
+
    public static void main(String[] args) {
+	  
       DemoFrame frame = new DemoFrame();
       frame.pack();
       frame.setVisible(true);
    }
+
+   private JPanel panel;
+   private JPanel NavigationPanel;
+   private JLabel lblNewLabel;
+   private JLabel lblNewLabel_1;
+   private JLabel lblAlgorithms;
+   private JComboBox comboBox;
+   private JSlider slider;
+   private JLabel lblAnimationSpeed;
+   private JButton runButton;
+   private JPanel panel_1;
+   private JTextArea logTable;
+   private JTable matrixTable;
+   private JScrollPane scrollPane;
+   private JLabel lblSample;
+   private JComboBox selectGraphCombobox;
+   private JButton saveButton;
+   private JSeparator separator;
+   private JButton newButton;
+   private JToggleButton addModeButton;
+   private JPanel panel_2;
+   private JButton runStepButton;
+   private JMenuBar menuBar;
+   private JMenu mnFile;
+   private JMenuItem mntmExit;
 }

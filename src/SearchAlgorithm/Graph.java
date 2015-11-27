@@ -3,6 +3,7 @@ package SearchAlgorithm;
 import Supports.Config;
 
 import java.awt.*;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -10,11 +11,11 @@ import java.util.List;
 /**
  * Created by 130708 on 2015/11/26.
  */
-public class Graph implements SearchEngineDataSource {
+public class Graph implements SearchEngineDataSource, Serializable {
    List<Vertex> vertices;
    List<Edge> edges;
    int[][] adjacentMatrix;
-
+   String name = "Unknown";
    boolean isDirectedGraph = false;
 
    public Graph() {
@@ -77,19 +78,25 @@ public class Graph implements SearchEngineDataSource {
          vertex.resetState();
       }
    }
+//   @Override
+//   public String toString() {
+//      StringBuilder sb = new StringBuilder("Graph: " + vertices.size() + " vertices, " + edges.size() + " edges" +
+//            "{\n\tVertices: ");
+//      for (Vertex vertex : vertices) {
+//         sb.append(vertex.toString() + ", ");
+//      }
+//      sb.append("\n\tEdges:");
+//      for (Edge edge : edges) {
+//         sb.append(edge.toString() + ", ");
+//      }
+//      sb.append("\n}");
+//      return sb.toString();
+//   }
+
+
    @Override
    public String toString() {
-      StringBuilder sb = new StringBuilder("Graph: " + vertices.size() + " vertices, " + edges.size() + " edges" +
-            "{\n\tVertices: ");
-      for (Vertex vertex : vertices) {
-         sb.append(vertex.toString() + ", ");
-      }
-      sb.append("\n\tEdges:");
-      for (Edge edge : edges) {
-         sb.append(edge.toString() + ", ");
-      }
-      sb.append("\n}");
-      return sb.toString();
+      return this.name;
    }
 
    @Override
@@ -103,4 +110,6 @@ public class Graph implements SearchEngineDataSource {
 
       return vertexList;
    }
+
+
 }

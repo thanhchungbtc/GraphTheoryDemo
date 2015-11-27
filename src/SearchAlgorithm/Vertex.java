@@ -4,21 +4,22 @@ import Supports.Config;
 import Supports.Vector2DHelper;
 
 import java.awt.*;
+import java.io.Serializable;
 
 /**
  * Created by 130708 on 2015/11/26.
  */
-public class Vertex {
+public class Vertex implements Serializable {
    public static final int NONE = 0;
    public static final int VISITED = 1;
    public static final int BACKTRACKING = 2;
    public static final int BACKTRACKING2 = 3;
    public static final int SHORTESTPATH = 4;
-   int radius = Config.VERTICE_RADIUS;
+   transient final int radius = Config.VERTICE_RADIUS;
    Point position;
    int id;
    int state;
-   final Color[] colors = new Color[] {Color.white, Color.cyan, Color.GRAY, Color.darkGray, Color.orange };
+   transient static final Color[] colors = new Color[] {Color.white, Color.cyan, Color.GRAY, Color.darkGray, Color.orange };
 
    public Vertex(Point position) {
       this.position = position;

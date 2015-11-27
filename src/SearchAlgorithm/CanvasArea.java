@@ -20,6 +20,7 @@ public class CanvasArea extends JPanel {
    Point previousPoint;
    // temporary line
    Line tempLine;
+   boolean inAddMode = false;
 
    @Override
    public Dimension getPreferredSize() {
@@ -53,7 +54,8 @@ public class CanvasArea extends JPanel {
       if (tempLine != null) {
          tempLine.draw(g);
       }
-      graph.draw(g);
+      if (graph != null)
+         graph.draw(g);
    }
 
    public void verticeMousePressed(MouseEvent e) {
@@ -69,7 +71,7 @@ public class CanvasArea extends JPanel {
 
       Vertex selectedVertex = graph.getVertexAtPoint(e.getPoint());
       if (selectedVertex == null) {
-         if (SwingUtilities.isLeftMouseButton(e)) {
+         if (inAddMode && SwingUtilities.isLeftMouseButton(e)) {
             graph.addVertex(new Vertex(e.getPoint()));
             repaint();
          }

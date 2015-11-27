@@ -3,12 +3,12 @@ package SearchAlgorithm;
 import Supports.Vector2DHelper;
 
 import java.awt.*;
+import java.io.Serializable;
 
 /**
  * Created by 130708 on 2015/11/26.
  */
-public class Edge {
-   Color color;
+public class Edge implements Serializable {
 
    Vertex vertex1;
    Vertex vertex2;
@@ -41,10 +41,9 @@ public class Edge {
    }
 
    public void draw(Graphics g) {
-      g.setColor(this.color);
+      g.setColor(Color.black);
       g.drawLine(vertex1.position.x, vertex1.position.y, vertex2.position.x, vertex2.position.y);
 
-      g.setColor(Color.black);
       String text = String.valueOf(this.cost);
       Point centerPoint = getCenterPoint();
 
