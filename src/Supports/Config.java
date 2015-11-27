@@ -11,5 +11,6 @@ public class Config {
       return _instance;
    }
 
-   public final int VERTICE_RADIUS = 15;
+   public static final int VERTICE_RADIUS = 15;
+   public static final int MAX_NUBMER_OF_VERTEX = 50;
 }
