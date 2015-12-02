@@ -1,4 +1,4 @@
-package SearchAlgorithm;
+package SearchAlgorithm.Model;
 
 import Supports.Config;
 import Supports.Vector2DHelper;
@@ -10,7 +10,11 @@ import java.io.Serializable;
  * Created by 130708 on 2015/11/26.
  */
 public class Vertex implements Serializable {
-   public static final int NONE = 0;
+   /**
+	 * 
+	 */
+	private static final long serialVersionUID = 4437043974878325387L;
+public static final int NONE = 0;
    public static final int VISITED = 1;
    public static final int BACKTRACKING = 2;
    public static final int BACKTRACKING2 = 3;
@@ -18,7 +22,7 @@ public class Vertex implements Serializable {
    transient final int radius = Config.VERTICE_RADIUS;
    Point position;
    int id;
-   int state;
+   public int state;
    transient static final Color[] colors = new Color[] {Color.white, Color.cyan, Color.GRAY, Color.darkGray, Color.orange };
 
    public Vertex(Point position) {
@@ -69,6 +73,7 @@ public class Vertex implements Serializable {
 
    @Override
    public boolean equals(Object obj) {
+      if (obj == null || !(obj instanceof Vertex)) return false;
       Vertex other = (Vertex)obj;
       return this.id == other.id;
    }

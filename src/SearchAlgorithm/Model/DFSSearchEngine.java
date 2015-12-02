@@ -1,12 +1,17 @@
-package SearchAlgorithm;
+package SearchAlgorithm.Model;
+
+import Supports.Log;
 
 import java.util.Stack;
 
 /**
  * Created by BTC on 11/26/15.
  */
-public class DFSSearchEngine extends SearchEngine {
+public class DFSSearchEngine extends AbstractSearchEngine {
+   @Override
    public SearchResult doSearch(Vertex fromVertex, Vertex toVertex) {
+      Log.Instance().push("========DEPTH FIRST SEARCH======================\n");
+      StringBuilder log = new StringBuilder();
       SearchResult searchResult = new SearchResult();
 
       Stack<Node> stack = new Stack<>();
@@ -17,14 +22,23 @@ public class DFSSearchEngine extends SearchEngine {
       Node n = new Node(fromVertex);
       stack.push(n);
       closed.push(n.vertex);
+      int numberOfLoop = 1;
       while (!stack.empty()) {
+         numberOfLoop++;
          Node currentNode = stack.pop();
+         // write log
+         log.append(currentNode.vertex.getName());
          temp.push(currentNode.vertex);
          // check if currentNode is target
-         if (toVertex != null && currentNode.vertex.equals(toVertex)) {
+         if (toVertex != null && currentNode.vertex.equals(toVertex) &&
+               searchResult.shortestPath == null) {
             // and print out the found path
-            System.out.print("TARGET: ");
+
             searchResult.shortestPath = this.getPathFromNode(currentNode);
+            StringBuilder shortestLog = new StringBuilder("Shortest Path from " + fromVertex.getName() + "->" + toVertex.getName() + ": " + stringFromPath(searchResult.shortestPath) + "\n");
+            shortestLog.append("Loop count: " + numberOfLoop + "\n");
+            Log.Instance().push(shortestLog.toString());
+            if (!traverAll) return searchResult;
          }
          // start searching
 
@@ -41,6 +55,11 @@ public class DFSSearchEngine extends SearchEngine {
                break;
             }
          }
+         if (!stack.isEmpty()) {
+            // log
+            log.append("->");
+            //-----------
+         }
       }
 
       Stack<Vertex> travelPath = new Stack<>();
@@ -49,17 +68,9 @@ public class DFSSearchEngine extends SearchEngine {
          travelPath.push(temp.pop());
       }
       searchResult.traversalPath = travelPath;
+      Log.Instance().push("Travel Path: " + log.toString() + "\n");
+      if (searchResult.shortestPath == null) Log.Instance().push("No way from " + fromVertex.getName() + "->" + toVertex.getName());
       return searchResult;
    }
 
-   @Override
-   protected Stack<Vertex> getPathFromNode(Node step) {
-      Stack<Vertex> results = new Stack<>();
-      while (step != null) {
-         System.out.println(step.vertex);
-         results.push(step.vertex);
-         step = step.previous;
-      }
-      return results;
-   }
 }

@@ -2,6 +2,8 @@ package Supports;
 
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
+import java.awt.*;
+
 /**
  * Created by BTC on 11/23/15.
  */
@@ -31,6 +33,8 @@ public class Config {
 			e.printStackTrace();
 		}
    }
+
+   public static final Color BACKGROUND_COLOR = Color.lightGray;
 
    public static final int VERTICE_RADIUS = 15;
    public static final int MAX_NUBMER_OF_VERTEX = 50;

@@ -1,4 +1,4 @@
-package SearchAlgorithm;
+package SearchAlgorithm.Model;
 
 /**
  * Created by BTC on 11/26/15.
